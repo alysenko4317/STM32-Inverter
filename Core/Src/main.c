@@ -18,11 +18,17 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "cmsis_os.h"
 #include "tim.h"
+#include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "app.h"
+#include "FreeRTOS.h"         // for xQueuePeek, pdPASS
+#include "queue.h"            // for xQueuePeek
+#include "cmsis_os2.h"        // for osDelay
 #include "stm324xg_eval.h"
 #include "stm324xg_eval_lcd.h"
 #include "fonts.h"
@@ -32,29 +38,27 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+QueueHandle_t xSensorQueue;
+QueueHandle_t xControlQueue;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
+void MX_FREERTOS_Init(void);
 /* USER CODE BEGIN PFP */
-
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -80,9 +84,7 @@ uint16_t Read_ADC_Value(void)
   */
 int main(void)
 {
-
   /* USER CODE BEGIN 1 */
-
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -91,7 +93,6 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -103,7 +104,7 @@ int main(void)
   BSP_LED_Init(LED1);
   BSP_LED_Init(LED3);
 
-  /*##-1- LCD Initialization #################################################*/
+  /*LCD Initialization */
 
   BSP_LCD_Init();    /* Initialize the LCD */
   BSP_LCD_DisplayOn();   /* Enable the LCD */
@@ -114,45 +115,44 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_TIM1_Init();
-
+  MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
+
+//  CommsInit();
+
+  /* Init scheduler */
+  osKernelInitialize();
+
+  /* Call init function for freertos objects (in cmsis_os2.c) */
+  MX_FREERTOS_Init();
+
+  // create your queues BEFORE starting tasks
+  xSensorQueue  = xQueueCreate(  1, sizeof(sensorPacket_t) );
+  xControlQueue = xQueueCreate(  1, sizeof(control_t)    );
+
+  // start background tasks
+  osThreadNew(CommsTask,   NULL, &(osThreadAttr_t){ .name="Comms",   .stack_size=256, .priority=osPriorityLow     });
+//  osThreadNew(ControlTask, NULL, &(osThreadAttr_t){ .name="Control", .stack_size=256, .priority=osPriorityAboveNormal });
+//  osThreadNew(SineGenTask, NULL, &(osThreadAttr_t){ .name="SineGen", .stack_size=256, .priority=osPriorityNormal    });
+  osThreadNew(LEDUITask,   NULL, &(osThreadAttr_t){ .name="LEDUI",   .stack_size=256, .priority=osPriorityLow       });
+
+  /* USER CODE END 2 */
 
   BSP_LCD_SetTextColor(LCD_COLOR_YELLOW);
   BSP_LCD_SetBackColor(LCD_COLOR_BLACK);
   BSP_LCD_SetFont(&Font24);
+  BSP_LCD_DisplayStringAtLine(0, (uint8_t*)"RTOS START");
 
-  /* USER CODE END 2 */
+  /* Start scheduler */
+  osKernelStart();
+
+  BSP_LCD_DisplayStringAtLine(0, (uint8_t*)"RTOS ERROR");
+  /* We should never get here as control is now taken by the scheduler */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
-  {
-    /* USER CODE END WHILE */
-
-    /* USER CODE BEGIN 3 */
-	// 1) Снятие значения (пример)
-	uint16_t adc = Read_ADC_Value();               // ваша функция чтения АЦП
-	float voltage = adc * (3.3f / 4095.0f);        // пересчёт
-
-	// 2) Формирование строки
-	char buf[32];
-	snprintf(buf, sizeof(buf), "V=%.2f V  ", voltage);
-
-	// 3) Очистка предыдущей строки (опционально)
-	BSP_LCD_ClearStringLine(0);    // очищает линию 0
-
-	// 4) Вывод на первую строку
-	BSP_LCD_DisplayStringAtLine(0, (uint8_t*)buf);
-
-	// 5) Ещё статус на второй строке
-	BSP_LCD_DisplayStringAt(0,
-						   BSP_LCD_GetYSize() - 24,  // Ypos, снизу, шрифт 24px
-						   (uint8_t*)"Status: OK",
-						   LEFT_MODE);
-
-	HAL_Delay(500);
-  }
-  /* USER CODE END 3 */
+  {}
 }
 
 /**
@@ -205,6 +205,27 @@ void SystemClock_Config(void)
 /* USER CODE END 4 */
 
 /**
+  * @brief  Period elapsed callback in non blocking mode
+  * @note   This function is called  when TIM6 interrupt took place, inside
+  * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
+  * a global variable "uwTick" used as application time base.
+  * @param  htim : TIM handle
+  * @retval None
+  */
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+  /* USER CODE BEGIN Callback 0 */
+
+  /* USER CODE END Callback 0 */
+  if (htim->Instance == TIM6) {
+    HAL_IncTick();
+  }
+  /* USER CODE BEGIN Callback 1 */
+
+  /* USER CODE END Callback 1 */
+}
+
+/**
   * @brief  This function is executed in case of error occurrence.
   * @retval None
   */
@@ -232,6 +253,7 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE BEGIN 6 */
   /* User can add his own implementation to report the file name and line number,
      ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+	vAssertCalled((char*)file, (int)line);
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
