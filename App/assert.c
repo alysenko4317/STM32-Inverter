@@ -1,9 +1,13 @@
+/* ASSERT Handler */
+
 #include "FreeRTOS.h"
 #include "task.h"
 #include "stm324xg_eval_lcd.h"
+
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>   // for bool, true, false
+
 #define ASSERT_MSG_FONT       Font12
 #define ASSERT_BG_COLOR       LCD_COLOR_RED
 #define ASSERT_TEXT_COLOR     LCD_COLOR_WHITE

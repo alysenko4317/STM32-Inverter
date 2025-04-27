@@ -6,9 +6,6 @@
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2025 STMicroelectronics.
-  * All rights reserved.
-  *
   * This software is licensed under terms that can be found in the LICENSE file
   * in the root directory of this software component.
   * If no LICENSE file comes with this software, it is provided AS-IS.
@@ -25,28 +22,29 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "app.h"
+#include "queue.h"            // for xQueuePeek
+#include "cmsis_os2.h"        // for osDelay
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
-
+QueueHandle_t xSensorQueue;
+QueueHandle_t xControlQueue;
 /* USER CODE END Variables */
+
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
 const osThreadAttr_t defaultTask_attributes = {
@@ -57,11 +55,9 @@ const osThreadAttr_t defaultTask_attributes = {
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
-
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void *argument);
-
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
 /**
@@ -87,7 +83,8 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE END RTOS_TIMERS */
 
   /* USER CODE BEGIN RTOS_QUEUES */
-  /* add queues, ... */
+  xSensorQueue  = xQueueCreate(  1, sizeof(sensorPacket_t) );
+  xControlQueue = xQueueCreate(  1, sizeof(control_t)    );
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
@@ -95,13 +92,15 @@ void MX_FREERTOS_Init(void) {
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
-  /* add threads, ... */
+  osThreadNew(CommsTask,   NULL, &(osThreadAttr_t){ .name="Comms",   .stack_size=256, .priority=osPriorityLow     });
+//  osThreadNew(ControlTask, NULL, &(osThreadAttr_t){ .name="Control", .stack_size=256, .priority=osPriorityAboveNormal });
+//  osThreadNew(SineGenTask, NULL, &(osThreadAttr_t){ .name="SineGen", .stack_size=256, .priority=osPriorityNormal    });
+  osThreadNew(LEDUITask,   NULL, &(osThreadAttr_t){ .name="LEDUI",   .stack_size=256, .priority=osPriorityLow       });
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
   /* add events, ... */
   /* USER CODE END RTOS_EVENTS */
-
 }
 
 /* USER CODE BEGIN Header_StartDefaultTask */
@@ -124,6 +123,5 @@ void StartDefaultTask(void *argument)
 
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
-
 /* USER CODE END Application */
 

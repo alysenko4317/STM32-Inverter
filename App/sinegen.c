@@ -1,8 +1,10 @@
-/* sinegen.c  ← in Core/Src/ */
+/* Sine generation task */
+
 #include "app.h"
 #include "tim.h"
 #include "FreeRTOS.h"
 #include "queue.h"
+
 #include <math.h>
 
 static uint16_t sineTable[100];

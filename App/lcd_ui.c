@@ -1,3 +1,4 @@
+/* UI update task */
 
 #include "app.h"
 #include "FreeRTOS.h"         // for xQueuePeek, pdPASS
@@ -5,6 +6,7 @@
 #include "cmsis_os2.h"        // for osDelay
 #include "stm324xg_eval_lcd.h"
 #include "stm324xg_eval.h"
+
 #include <stdio.h>
 
 extern QueueHandle_t xSensorQueue;

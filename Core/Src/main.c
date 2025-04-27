@@ -6,9 +6,6 @@
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2025 STMicroelectronics.
-  * All rights reserved.
-  *
   * This software is licensed under terms that can be found in the LICENSE file
   * in the root directory of this software component.
   * If no LICENSE file comes with this software, it is provided AS-IS.
@@ -16,6 +13,7 @@
   ******************************************************************************
   */
 /* USER CODE END Header */
+
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
@@ -25,15 +23,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "app.h"
-#include "FreeRTOS.h"         // for xQueuePeek, pdPASS
-#include "queue.h"            // for xQueuePeek
-#include "cmsis_os2.h"        // for osDelay
 #include "stm324xg_eval.h"
 #include "stm324xg_eval_lcd.h"
-#include "fonts.h"
-#include <stdio.h>
-
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -49,10 +40,7 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-
 /* USER CODE BEGIN PV */
-QueueHandle_t xSensorQueue;
-QueueHandle_t xControlQueue;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -63,19 +51,6 @@ void MX_FREERTOS_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
-/**
- * @brief  Stub function for testing ADC readings.
- * @note   This returns a simulated 12-bit value cycling through 0–4095.
- * @return Simulated ADC value (0 to 4095).
- */
-uint16_t Read_ADC_Value(void)
-{
-    static uint16_t dummy = 0;
-    dummy = (dummy + 512) % 4096;
-    return dummy;
-}
-
 /* USER CODE END 0 */
 
 /**
@@ -105,9 +80,8 @@ int main(void)
   BSP_LED_Init(LED3);
 
   /*LCD Initialization */
-
-  BSP_LCD_Init();    /* Initialize the LCD */
-  BSP_LCD_DisplayOn();   /* Enable the LCD */
+  BSP_LCD_Init();                   /* Initialize the LCD */
+  BSP_LCD_DisplayOn();              /* Enable the LCD */
   BSP_LCD_Clear(LCD_COLOR_BLACK);   /* Clear the LCD Background layer */
 
   /* USER CODE END SysInit */
@@ -116,9 +90,10 @@ int main(void)
   MX_GPIO_Init();
   MX_TIM1_Init();
   MX_USART3_UART_Init();
-  /* USER CODE BEGIN 2 */
 
+  /* USER CODE BEGIN 2 */
 //  CommsInit();
+  /* USER CODE END 2 */
 
   /* Init scheduler */
   osKernelInitialize();
@@ -126,33 +101,20 @@ int main(void)
   /* Call init function for freertos objects (in cmsis_os2.c) */
   MX_FREERTOS_Init();
 
-  // create your queues BEFORE starting tasks
-  xSensorQueue  = xQueueCreate(  1, sizeof(sensorPacket_t) );
-  xControlQueue = xQueueCreate(  1, sizeof(control_t)    );
-
-  // start background tasks
-  osThreadNew(CommsTask,   NULL, &(osThreadAttr_t){ .name="Comms",   .stack_size=256, .priority=osPriorityLow     });
-//  osThreadNew(ControlTask, NULL, &(osThreadAttr_t){ .name="Control", .stack_size=256, .priority=osPriorityAboveNormal });
-//  osThreadNew(SineGenTask, NULL, &(osThreadAttr_t){ .name="SineGen", .stack_size=256, .priority=osPriorityNormal    });
-  osThreadNew(LEDUITask,   NULL, &(osThreadAttr_t){ .name="LEDUI",   .stack_size=256, .priority=osPriorityLow       });
-
-  /* USER CODE END 2 */
-
-  BSP_LCD_SetTextColor(LCD_COLOR_YELLOW);
-  BSP_LCD_SetBackColor(LCD_COLOR_BLACK);
-  BSP_LCD_SetFont(&Font24);
-  BSP_LCD_DisplayStringAtLine(0, (uint8_t*)"RTOS START");
-
   /* Start scheduler */
   osKernelStart();
 
-  BSP_LCD_DisplayStringAtLine(0, (uint8_t*)"RTOS ERROR");
   /* We should never get here as control is now taken by the scheduler */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
-  {}
+  {
+    /* USER CODE END WHILE */
+
+    /* USER CODE BEGIN 3 */
+  }
+  /* USER CODE END 3 */
 }
 
 /**

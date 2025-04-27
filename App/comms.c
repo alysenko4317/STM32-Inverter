@@ -1,14 +1,14 @@
+/* HV MCU reading task */
+
 #include "app.h"
 #include "usart.h"
 #include "FreeRTOS.h"
 #include "queue.h"
-// comms.c / comms.h
-#include "usart.h"  // MX_USART3_UART_Init()
 #include "cmsis_os.h"
-#include <stdbool.h>   // for bool, true, false
-
-#include "stm324xg_eval_lcd.h"
 #include "stm324xg_eval.h"
+#include "stm324xg_eval_lcd.h"
+
+#include <stdbool.h>
 
 extern QueueHandle_t xSensorQueue;
 
@@ -124,7 +124,7 @@ void CommsTask(void *p)
   }
 }
 */
-// В init:
+
 void CommsInit(void)
 {
  // MX_USART3_UART_Init();
