@@ -1,4 +1,4 @@
-# PSA-700 Inverter Board Modernization
+# PSA-700 Inverter Board Mod
 
 This is the story of how I resurrected an inverter from a dead charging-station board—and learned STM32 along the way.
 
