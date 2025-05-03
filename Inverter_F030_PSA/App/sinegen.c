@@ -238,7 +238,7 @@ void SineGen_Update(void)
 // Hook into HAL's period-elapsed callback
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-	HAL_GPIO_TogglePin(LED_A_GPIO_Port, LED_A_Pin);  // Debug LED
+    LED_A_Toggle();  // Debug LED
 
     if (htim->Instance == TIM6) {
         SineGen_Update();
