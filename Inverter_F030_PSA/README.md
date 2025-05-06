@@ -105,8 +105,33 @@ SineGen_Stop();    // ramp down and shut off
 
 ---
 
+## 6. Full-bridge inverter running with sine output
+
+At this stage, the full bridge is fully operational. The PWM signals are driven through **EG3112 gate drivers**, switching MOSFETs, and an **output LC filter**. The screenshot below shows the waveform captured directly at the inverter output under real load — a 24 V / 15 W incandescent bulb.
+
+![Output sine waveform](images/sine_out_ac.png)
+
+```text
+• Load: 24 V / 15 W incandescent bulb
+• Measured output: ≈ 8.2 V RMS — the bulb glows at partial brightness
+• Probe: 1:10 attenuation
+• Vertical scale: 500 mV/div
+• Peak-to-peak amplitude: 5 divisions × 500 mV × 10 = 25 Vpp
+• Peak amplitude: 12.5 V → RMS ≈ 8.84 V (expected for ideal sine)
+• Timebase: 2 ms/div — one full sine cycle fits across ~10 divisions
+```
+
+> 💡 The difference between the calculated RMS (8.84 V) and the measured value (8.2 V) is due to minor waveform imperfections — slight asymmetry, peak rounding, or residual switching noise. This is expected behavior for a PWM-driven inverter and indicates real-world performance versus ideal math.
+
+The waveform confirms correct gate drive sequencing, dead-time handling, and LC filtering. Overall, the inverter is now generating a clean, scaled-down sine wave with real load.
+
 ## What’s Next
 
-- Add current-sense feedback and closed-loop control  
-- Implement over-temperature shutdown  
-- Port to other STM32 families 
+- Read UART telemetry from the auxiliary HV-side controller  
+  In this inverter design, an isolated auxiliary microcontroller performs measurements on the high-voltage side, including HV DC+, HV GND offset, load current, etc. Data is transmitted via an opto-isolated UART interface to maintain full electrical isolation.  
+  The UART protocol has been successfully reverse-engineered using a logic analyzer and validated through targeted experiments. A Python script is available to read and parse the data stream on a PC:  
+  👉 [Protocol analysis and Python script on GitHub](https://github.com/alysenko4317/pcb-re/tree/main/ups_XO%20PSA-700/soft)
+
+- Implement diagnostic data output  
+  After receiving telemetry in firmware, the next step is to output key diagnostics (measured voltages, current, fault states) either to a display or to a secondary board over I²C or similar interface. This will help verify real-time behavior and improve debugging and development workflow.
+

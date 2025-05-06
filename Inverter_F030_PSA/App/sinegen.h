@@ -33,6 +33,8 @@ void SineGen_Stop(void);
 
 void SineGen_Update(void);
 
+void Bridge_SoftStart(void);
+
 // TIM6 interrupt handler (hook into TIM6_DAC_IRQHandler)
 //void TIM6_DAC_IRQHandler(void);
 

@@ -111,9 +111,9 @@ int main(void)
   uint32_t prevA = HAL_GetTick();
   uint32_t prevB = prevA;
 
-  HAL_TIM_Base_Start_IT(&htim6);
   SineGen_Init();
   SineGen_Start();
+ // Bridge_SoftStart();
 
   while (1)
   {
